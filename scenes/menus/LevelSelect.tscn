@@ -45,3 +45,14 @@ offset_bottom = 620
 
 [node name="GridContainer" type="GridContainer" parent="ScrollContainer"]
 columns = 2
+
+[node name="BackButton" type="Button" parent="."]
+offset_left = 540
+offset_top = 640
+offset_right = 740
+offset_bottom = 700
+custom_minimum_size = Vector2(200, 60)
+theme_override_styles/normal = SubResource("1")
+theme_override_colors/font_color = Color(0.9, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "BACK"

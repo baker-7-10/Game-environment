@@ -52,7 +52,7 @@ func _populate_grid() -> void:
 		btn.add_theme_stylebox_override("normal", style)
 		btn.add_theme_stylebox_override("hover", style)
 		btn.add_theme_stylebox_override("pressed", style)
-		btn.theme_override_font_sizes["font_size"] = 14
+		btn.add_theme_font_size_override("font_size", 14)
 
 		var label_text = res.mission_name + "\n" + res.description
 		if completed:

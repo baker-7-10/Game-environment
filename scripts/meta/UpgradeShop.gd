@@ -19,16 +19,16 @@ func _populate_shop() -> void:
 	# Currency display
 	var currency_label = Label.new()
 	currency_label.text = "Currency: $" + str(SaveManager.currency)
-	currency_label.theme_override_font_sizes["font_size"] = 20
-	currency_label.theme_override_colors["font_color"] = Color(1, 0.85, 0.2)
+	currency_label.add_theme_font_size_override("font_size", 20)
+	currency_label.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 	container.add_child(currency_label)
 	container.add_child(HSeparator.new())
 
 	for t in _unit_types:
 		var unit_header = Label.new()
 		unit_header.text = _display_names[t]
-		unit_header.theme_override_font_sizes["font_size"] = 18
-		unit_header.theme_override_colors["font_color"] = Color(0.6, 0.7, 0.9)
+		unit_header.add_theme_font_size_override("font_size", 18)
+		unit_header.add_theme_color_override("font_color", Color(0.6, 0.7, 0.9))
 		container.add_child(unit_header)
 
 		var stats_to_show = SaveManager.UPGRADE_STATS[t]
@@ -43,11 +43,11 @@ func _populate_shop() -> void:
 
 			var name_label = Label.new()
 			name_label.text = s.capitalize()
-			name_label.theme_override_font_sizes["font_size"] = 12
+			name_label.add_theme_font_size_override("font_size", 12)
 			stat_box.add_child(name_label)
 
 			var value_label = Label.new()
-			value_label.theme_override_font_sizes["font_size"] = 11
+			value_label.add_theme_font_size_override("font_size", 11)
 			if s == "gold_cost":
 				value_label.text = "Cost: " + str(int(round(mult * 100))) + "%"
 			else:
@@ -56,8 +56,8 @@ func _populate_shop() -> void:
 
 			var level_label = Label.new()
 			level_label.text = "Lv." + str(current_level) + "/" + str(SaveManager.MAX_LEVEL)
-			level_label.theme_override_font_sizes["font_size"] = 10
-			level_label.theme_override_colors["font_color"] = Color(0.5, 0.5, 0.7)
+			level_label.add_theme_font_size_override("font_size", 10)
+			level_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.7))
 			stat_box.add_child(level_label)
 
 			var buy_btn = Button.new()
@@ -88,7 +88,7 @@ func _populate_shop() -> void:
 			style.border_width_right = 1
 			style.border_width_bottom = 1
 			buy_btn.add_theme_stylebox_override("normal", style)
-			buy_btn.theme_override_font_sizes["font_size"] = 11
+			buy_btn.add_theme_font_size_override("font_size", 11)
 			stat_box.add_child(buy_btn)
 
 			hbox.add_child(stat_box)
