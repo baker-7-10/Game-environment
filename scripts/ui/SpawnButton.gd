@@ -21,6 +21,8 @@ func _process(_delta: float) -> void:
 func _on_pressed() -> void:
 	if Global.get_population(Global.PLAYER_TEAM) >= Global.MAX_POPULATION:
 		return
+	if unit_type == "miner" and Global.get_miner_count(Global.PLAYER_TEAM) >= Global.MAX_MINERS_PER_TEAM:
+		return
 	var cost = _effective_cost
 	if Global.get_gold(Global.PLAYER_TEAM) >= cost:
 		Global.modify_gold(Global.PLAYER_TEAM, -cost)

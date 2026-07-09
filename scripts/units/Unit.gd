@@ -19,7 +19,12 @@ var _camera: Node
 var _sound_mgr: Node
 var _spark_scene = preload("res://scenes/HitSpark.tscn")
 
+var selected: bool = false
+var move_to_position: Vector2 = Vector2(-1, -1)
+var direct_control: bool = false
+
 @onready var visual: Node2D = $Visual
+@onready var selection_ring: Polygon2D = $SelectionRing
 
 func _stat(key: String, default_val = 0.0):
 	var base = stats[key] if stats and key in stats else default_val
@@ -58,8 +63,8 @@ func _ready() -> void:
 			shape_node.shape.radius = _stat("attack_range", 50.0)
 
 func _process(delta: float) -> void:
-	if health_bar and health_bar.has_method("update_value"):
-		health_bar.update_value(current_health / _stat("max_health", 100.0))
+	if health_bar and health_bar.has_method("update_hp"):
+		health_bar.update_hp(current_health, _stat("max_health", 100.0))
 	if visual and visual.has_method("set_walking"):
 		visual.set_walking(velocity.length_squared() > 0.1, delta)
 	if visual and visual.has_method("set_rage_glow"):
@@ -123,6 +128,7 @@ func take_damage(amount: float, _source: Node2D = null) -> void:
 	current_health = max(0.0, current_health - amount)
 	_spawn_spark(global_position, Color(1, 0.9, 0.7))
 	_hit_feedback()
+	_show_damage_number(amount)
 	if current_health <= 0:
 		die()
 
@@ -150,10 +156,37 @@ func get_unit_type() -> String:
 	return unit_type
 
 func get_mine_position() -> Vector2:
-	return Vector2(640, 360)
+	if team == Global.PLAYER_TEAM:
+		return Vector2(300, 360)
+	else:
+		return Vector2(980, 360)
 
 func get_base_position() -> Vector2:
 	if team == Global.PLAYER_TEAM:
 		return Vector2(100, 360)
 	else:
 		return Vector2(1180, 360)
+
+func set_selected(val: bool) -> void:
+	selected = val
+	if selection_ring:
+		selection_ring.visible = val
+
+func cmd_move_to(pos: Vector2) -> void:
+	move_to_position = pos
+	if unit_type == "miner":
+		state_machine.change_to("miner_move", {"destination": pos})
+	else:
+		state_machine.change_to("move")
+
+func _show_damage_number(amount: float) -> void:
+	var label = Label.new()
+	label.text = str(int(amount))
+	label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+	label.add_theme_font_size_override("font_size", 14)
+	label.position = Vector2(-10, -45)
+	add_child(label)
+	var tween = create_tween()
+	tween.tween_property(label, "position:y", -65, 0.6)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.6)
+	tween.finished.connect(label.queue_free)

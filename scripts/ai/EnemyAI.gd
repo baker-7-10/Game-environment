@@ -98,6 +98,8 @@ func _spawn_unit() -> void:
 			type = _type_list[i]
 			break
 
+	if type == "miner" and Global.get_miner_count(Global.ENEMY_TEAM) >= Global.MAX_MINERS_PER_TEAM:
+		return
 	var stats = _get_stats_for_type(type)
 	if stats and "gold_cost" in stats and Global.get_gold(Global.ENEMY_TEAM) >= stats.gold_cost:
 		Global.modify_gold(Global.ENEMY_TEAM, -stats.gold_cost)

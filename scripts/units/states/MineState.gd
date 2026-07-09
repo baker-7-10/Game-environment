@@ -9,6 +9,12 @@ func _ready() -> void:
 
 func enter(_msg: Dictionary = {}) -> void:
 	mine_timer = 0.0
+	if unit:
+		Global.get_miners_at_mine(unit.team).append(unit)
+
+func exit() -> void:
+	if unit:
+		Global.get_miners_at_mine(unit.team).erase(unit)
 
 func update(delta: float) -> void:
 	if not unit:

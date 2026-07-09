@@ -4,7 +4,7 @@ func update(_delta: float) -> void:
 	if not unit:
 		return
 
-	if unit.team == Global.PLAYER_TEAM and Global.player_stance == Global.ArmyStance.RETREAT:
+	if unit.team == Global.PLAYER_TEAM and Global.player_stance == Global.ArmyStance.RETREAT and unit.move_to_position == Vector2(-1, -1):
 		unit.state_machine.change_to("move")
 		return
 
@@ -14,6 +14,8 @@ func update(_delta: float) -> void:
 			unit.state_machine.change_to("move")
 	else:
 		unit.acquire_target()
+		if not unit.target and unit.team == Global.PLAYER_TEAM and Global.player_stance == Global.ArmyStance.ADVANCE and unit.move_to_position == Vector2(-1, -1):
+			unit.state_machine.change_to("move")
 
 func physics_update(_delta: float) -> void:
 	if unit:

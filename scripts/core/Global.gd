@@ -18,6 +18,14 @@ const MAX_POPULATION: int = 20
 var player_population: int = 0
 var enemy_population: int = 0
 
+# --- Miner limits ---
+const MAX_MINERS_PER_TEAM: int = 2
+const MAX_MINERS_PER_MINE: int = 2
+var player_miner_count: int = 0
+var enemy_miner_count: int = 0
+var player_miners_at_mine: Array = []
+var enemy_miners_at_mine: Array = []
+
 # --- Rage meter ---
 const RAGE_MAX: float = 100.0
 const RAGE_FILL_RATE: float = 4.0
@@ -117,6 +125,18 @@ func _tick_rage(delta: float) -> void:
 		player_rage = min(RAGE_MAX, player_rage + RAGE_FILL_RATE * delta)
 		SignalBus.rage_changed.emit(PLAYER_TEAM, player_rage, RAGE_MAX)
 
+func get_miner_count(team: int) -> int:
+	return player_miner_count if team == PLAYER_TEAM else enemy_miner_count
+
+func modify_miner_count(team: int, delta: int) -> void:
+	if team == PLAYER_TEAM:
+		player_miner_count = max(0, player_miner_count + delta)
+	else:
+		enemy_miner_count = max(0, enemy_miner_count + delta)
+
+func get_miners_at_mine(team: int) -> Array:
+	return player_miners_at_mine if team == PLAYER_TEAM else enemy_miners_at_mine
+
 func reset_match() -> void:
 	match_time = 0.0
 	is_game_over = false
@@ -126,6 +146,10 @@ func reset_match() -> void:
 	player_stance = ArmyStance.ADVANCE
 	player_population = 0
 	enemy_population = 0
+	player_miner_count = 0
+	enemy_miner_count = 0
+	player_miners_at_mine.clear()
+	enemy_miners_at_mine.clear()
 	player_rage = 0.0
 	enemy_rage = 0.0
 	_rage_active = false

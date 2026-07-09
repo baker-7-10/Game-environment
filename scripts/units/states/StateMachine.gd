@@ -23,10 +23,14 @@ func _is_state_script(script: GDScript) -> bool:
 	return false
 
 func _process(delta: float) -> void:
+	if owner and "direct_control" in owner and owner.direct_control:
+		return
 	if current_state and current_state.has_method("update"):
 		current_state.update(delta)
 
 func _physics_process(delta: float) -> void:
+	if owner and "direct_control" in owner and owner.direct_control:
+		return
 	if current_state and current_state.has_method("physics_update"):
 		current_state.physics_update(delta)
 
