@@ -7,6 +7,8 @@ var player_units_container: Node2D
 var enemy_units_container: Node2D
 var projectiles_container: Node2D
 
+var hero: Node2D = null
+
 @onready var world: Node2D = $World
 @onready var enemy_ai: Node = $EnemyAI
 
@@ -26,6 +28,7 @@ func _ready() -> void:
 	SignalBus.unit_spawned.connect(_on_unit_spawned)
 	SignalBus.unit_died.connect(_on_unit_died)
 	SignalBus.game_restarted.connect(_on_game_restarted)
+	SignalBus.army_stance_changed.connect(_on_army_stance_changed)
 
 	# Reload mission (SceneManager may have just set pending_mission_id)
 	Global.load_current_mission()
@@ -42,6 +45,27 @@ func _ready() -> void:
 		# Fallback defaults
 		Global.modify_gold(Global.PLAYER_TEAM, 300)
 		Global.modify_gold(Global.ENEMY_TEAM, 300)
+
+	_spawn_hero()
+
+func _spawn_hero() -> void:
+	var scene = unit_scenes.get("swordsman")
+	if not scene:
+		return
+	var unit = scene.instantiate()
+	unit.team = Global.PLAYER_TEAM
+	unit.unit_type = "swordsman"
+	unit.global_position = player_spawn_point.global_position + Vector2(40, 0)
+	player_units_container.add_child(unit)
+	hero = unit
+	hero.set_selected(true)
+	# tint hero gold
+	if hero.visual and hero.visual.has_method("set_body_color"):
+		hero.visual.set_body_color(Color(1.0, 0.85, 0.2))
+	var pc = get_node("PlayerController")
+	if pc:
+		pc.hero = hero
+	Global.modify_population(Global.PLAYER_TEAM, 1)
 
 func _on_unit_spawned(team: int, _unit_ref: Node2D, type: String) -> void:
 	var scene = unit_scenes.get(type)
@@ -74,10 +98,21 @@ func _on_unit_spawned(team: int, _unit_ref: Node2D, type: String) -> void:
 			(lane - 2) * 10 + (randi() % 5) - 2
 		)
 
+	if type == "miner":
+		Global.modify_miner_count(team, 1)
+
 	Global.modify_population(team, 1)
 
-func _on_unit_died(team: int, _unit: Node2D) -> void:
+func _on_unit_died(team: int, unit: Node2D) -> void:
+	if unit and unit.has_method("get_unit_type") and unit.get_unit_type() == "miner":
+		Global.modify_miner_count(team, -1)
 	Global.modify_population(team, -1)
+
+func _on_army_stance_changed(_stance: int) -> void:
+	for child in player_units_container.get_children():
+		if child.has_method("get_team") and child.get_team() == Global.PLAYER_TEAM:
+			if child.has_method("cmd_move_to"):
+				child.move_to_position = Vector2(-1, -1)
 
 func _on_game_restarted() -> void:
 	for child in player_units_container.get_children():

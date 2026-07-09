@@ -19,6 +19,10 @@ var stance_buttons: Array[Button]
 var _stance_active_style: StyleBoxFlat
 var _stance_inactive_style: StyleBoxFlat
 
+var _selected_units: Array = []
+var _is_dragging: bool = false
+var _drag_start: Vector2
+
 func _make_stance_style(active: bool) -> StyleBoxFlat:
 	var s = StyleBoxFlat.new()
 	if active:
@@ -68,6 +72,88 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_W: _set_stance(Global.ArmyStance.HOLD, hold_btn)
 			KEY_E: _set_stance(Global.ArmyStance.RETREAT, retreat_btn)
 			KEY_R: _on_rage_pressed()
+
+	if Global.is_game_over:
+		return
+
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_is_dragging = true
+				_drag_start = event.position
+			else:
+				_is_dragging = false
+				if _drag_start.distance_to(event.position) < 10:
+					_select_at_position(event.position)
+				else:
+					_select_in_rect(_drag_start, event.position)
+
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+			_move_selected_to(event.position)
+
+func _clear_selection() -> void:
+	for u in _selected_units:
+		if is_instance_valid(u) and u.has_method("set_selected"):
+			u.set_selected(false)
+	_selected_units.clear()
+
+func _select_unit(unit: Node2D) -> void:
+	_clear_selection()
+	_selected_units.append(unit)
+	if unit.has_method("set_selected"):
+		unit.set_selected(true)
+
+func _select_at_position(screen_pos: Vector2) -> void:
+	var camera = get_viewport().get_camera_2d()
+	if not camera:
+		return
+	var view_size = get_viewport().size
+	var world_pos = camera.global_position + (screen_pos - view_size / 2) / camera.zoom
+	var space = get_viewport().world_2d.direct_space_state
+	var params = PhysicsPointQueryParameters2D.new()
+	params.position = world_pos
+	params.collision_mask = 1
+	var results = space.intersect_point(params)
+	for r in results:
+		var obj = r.collider
+		if obj and obj.has_method("get_team") and obj.get_team() == Global.PLAYER_TEAM and not obj.is_dead():
+			_select_unit(obj)
+			return
+	_clear_selection()
+
+func _select_in_rect(from: Vector2, to: Vector2) -> void:
+	_clear_selection()
+	var camera = get_viewport().get_camera_2d()
+	if not camera:
+		return
+	var rect = Rect2(from.min(to), (from - to).abs())
+	var view_size = get_viewport().size
+	var main = get_tree().current_scene
+	if not main:
+		return
+	var container = main.get_node("World/PlayerUnits")
+	if not container:
+		return
+	for child in container.get_children():
+		if not is_instance_valid(child):
+			continue
+		if child.has_method("is_dead") and child.is_dead():
+			continue
+		var on_screen = (child.global_position - camera.global_position) * camera.zoom + view_size / 2
+		if rect.has_point(on_screen):
+			_selected_units.append(child)
+			if child.has_method("set_selected"):
+				child.set_selected(true)
+
+func _move_selected_to(screen_pos: Vector2) -> void:
+	var camera = get_viewport().get_camera_2d()
+	if not camera:
+		return
+	var view_size = get_viewport().size
+	var world_pos = camera.global_position + (screen_pos - view_size / 2) / camera.zoom
+	for u in _selected_units:
+		if is_instance_valid(u) and u.has_method("cmd_move_to") and not u.is_dead():
+			u.cmd_move_to(world_pos)
 
 func _set_stance(stance: int, btn: Button) -> void:
 	if Global.is_game_over:

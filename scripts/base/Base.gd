@@ -21,8 +21,8 @@ func _ready() -> void:
 		banner.color = Color(1.0, 0.3, 0.3)
 
 func _process(_delta: float) -> void:
-	if health_bar and health_bar.has_method("update_value"):
-		health_bar.update_value(current_health / max_health)
+	if health_bar and health_bar.has_method("update_hp"):
+		health_bar.update_hp(current_health, max_health)
 
 func take_damage(amount: float, _source: Node2D = null) -> void:
 	current_health = max(0.0, current_health - amount)
@@ -30,6 +30,7 @@ func take_damage(amount: float, _source: Node2D = null) -> void:
 
 	Global.apply_hit_stop(0.12)
 	_hit_feedback()
+	_show_damage_number(amount)
 
 	if _camera and _camera.has_method("shake"):
 		var health_pct = current_health / max_health
@@ -64,3 +65,15 @@ func _hit_feedback() -> void:
 	var t2 = create_tween()
 	t2.tween_property(banner, "color", Color.WHITE, 0.05)
 	t2.tween_property(banner, "color", bc, 0.1)
+
+func _show_damage_number(amount: float) -> void:
+	var label = Label.new()
+	label.text = str(int(amount))
+	label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+	label.add_theme_font_size_override("font_size", 16)
+	label.position = Vector2(-12, -60)
+	add_child(label)
+	var tween = create_tween()
+	tween.tween_property(label, "position:y", -85, 0.7)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.7)
+	tween.finished.connect(label.queue_free)

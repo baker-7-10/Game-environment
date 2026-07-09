@@ -28,7 +28,7 @@ func _process(delta: float) -> void:
 	_update_zoom(delta)
 
 # ---------------------------------------------------------------------------
-# Follow — smooth-lerp toward midpoint of frontmost units
+# Follow — smooth-lerp toward frontmost player unit (X + Y)
 # ---------------------------------------------------------------------------
 func _update_follow(_delta: float) -> void:
 	var main = get_parent()
@@ -36,37 +36,28 @@ func _update_follow(_delta: float) -> void:
 		return
 	var player_container = main.get_node("World/PlayerUnits")
 	var enemy_container = main.get_node("World/EnemyUnits")
-	if not player_container or not enemy_container:
+	if not player_container:
 		return
 
-	var player_front = _get_frontmost_x(player_container, true)
-	var enemy_front = _get_frontmost_x(enemy_container, false)
+	var hero = main.get_node("PlayerController").hero if main.has_node("PlayerController") else null
+	var target = hero if (hero and is_instance_valid(hero) and not hero.is_dead()) else _get_frontmost_unit(player_container)
 
-	if player_front == INF and enemy_front == INF:
+	if target == null:
 		_target_position = Vector2(640, 360)
-		_target_zoom = _base_zoom
 	else:
-		var mid_x: float
-		if player_front == INF:
-			mid_x = enemy_front
-		elif enemy_front == INF:
-			mid_x = player_front
-		else:
-			mid_x = (player_front + enemy_front) * 0.5
+		_target_position.x = target.global_position.x + 120.0
+		_target_position.y = target.global_position.y
 
-		_target_position.x = mid_x
-		_target_position.y = 360.0
+	_check_clash(player_container, enemy_container)
 
-		_check_clash(player_container, enemy_container)
-
-	# Clamp to playable bounds
-	_target_position.x = clamp(_target_position.x, 300.0, 980.0)
+	_target_position.x = clamp(_target_position.x, 320.0, 1100.0)
+	_target_position.y = clamp(_target_position.y, 200.0, 520.0)
 
 	global_position = global_position.lerp(_target_position, follow_speed * _delta)
 
-static func _get_frontmost_x(container: Node, is_player: bool) -> float:
-	var best = INF if is_player else -INF
-	var found = false
+static func _get_frontmost_unit(container: Node) -> Node2D:
+	var best: Node2D = null
+	var best_x = -INF
 	for child in container.get_children():
 		if not is_instance_valid(child):
 			continue
@@ -74,14 +65,10 @@ static func _get_frontmost_x(container: Node, is_player: bool) -> float:
 			continue
 		if not child.has_method("get_team"):
 			continue
-		found = true
-		if is_player:
-			if child.global_position.x < best:
-				best = child.global_position.x
-		else:
-			if child.global_position.x > best:
-				best = child.global_position.x
-	return best if found else INF
+		if child.global_position.x > best_x:
+			best_x = child.global_position.x
+			best = child
+	return best
 
 # ---------------------------------------------------------------------------
 # Clash detection — zoom out when many units are near each other

@@ -17,16 +17,21 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	_draw_sky()
+	var view_size = get_viewport().size
+	var cam_y = _camera.global_position.y
+	var zoom_y = _camera.zoom.y
+	var vis_top = int(cam_y - (view_size.y / 2) / zoom_y) - 100
+	var vis_bot = int(cam_y + (view_size.y / 2) / zoom_y) + 100
+	_draw_sky(vis_top, vis_bot)
 	_draw_clouds()
 	_draw_far_hills()
 	_draw_near_hills()
-	_draw_ground()
+	_draw_ground(vis_top, vis_bot)
 
 # ---------------------------------------------------------------------------
 # Sky — parallax factor 0.0 (fixed to world, scrolls at full camera speed)
 # ---------------------------------------------------------------------------
-func _draw_sky() -> void:
+func _draw_sky(vis_top: int, vis_bot: int) -> void:
 	var ox = _camera_offset.x * 0.0
 	var sky_top = Color(0.06, 0.06, 0.18)
 	var sky_mid = Color(0.12, 0.18, 0.4)
@@ -34,8 +39,10 @@ func _draw_sky() -> void:
 	var x0 = -EXTEND_LEFT + ox
 	var xw = DRAW_W
 
-	for y in range(0, 360, 2):
-		var t = y / 360.0
+	var y0 = max(vis_top, -2000)
+	var y1 = min(vis_bot, 359)
+	for y in range(y0, y1, 2):
+		var t = clamp(y / 360.0, 0.0, 1.0)
 		var c: Color
 		if t < 0.5:
 			c = sky_top.lerp(sky_mid, t * 2.0)
@@ -113,7 +120,7 @@ func _draw_near_hills() -> void:
 # ---------------------------------------------------------------------------
 # Ground — parallax factor 1.0 (screen-fixed = follows camera 1:1)
 # ---------------------------------------------------------------------------
-func _draw_ground() -> void:
+func _draw_ground(vis_top: int, vis_bot: int) -> void:
 	var ox = _camera_offset.x * 1.0
 
 	var x0 = -EXTEND_LEFT + ox
@@ -123,8 +130,10 @@ func _draw_ground() -> void:
 	var mid_c = Color(0.18, 0.12, 0.05)
 	var bot_c = Color(0.10, 0.07, 0.03)
 
-	for y in range(360, 400, 2):
-		var t = (y - 360) / 40.0
+	var y0 = max(vis_top, 360)
+	var y1 = min(vis_bot, 2000)
+	for y in range(y0, y1, 2):
+		var t = clamp((y - 360) / 40.0, 0.0, 1.0)
 		var c: Color
 		if t < 0.5:
 			c = top_c.lerp(mid_c, t * 2.0)
@@ -132,5 +141,5 @@ func _draw_ground() -> void:
 			c = mid_c.lerp(bot_c, (t - 0.5) * 2.0)
 		draw_rect(Rect2(x0, y, xw, 2), c)
 
-	# Grass line at the top surface
-	draw_rect(Rect2(x0, 360, xw, 3), Color(0.14, 0.42, 0.14))
+	if 360 >= vis_top and 360 <= vis_bot:
+		draw_rect(Rect2(x0, 360, xw, 3), Color(0.14, 0.42, 0.14))

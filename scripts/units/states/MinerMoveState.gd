@@ -11,7 +11,10 @@ func update(_delta: float) -> void:
 	var dist = unit.global_position.distance_to(destination)
 	if dist < 10.0:
 		if destination == unit.get_mine_position():
-			unit.state_machine.change_to("mine")
+			if Global.get_miners_at_mine(unit.team).size() < Global.MAX_MINERS_PER_MINE:
+				unit.state_machine.change_to("mine")
+			else:
+				unit.velocity = Vector2.ZERO
 		else:
 			unit.state_machine.change_to("deposit")
 		return
